@@ -64,7 +64,7 @@ public class Main {
                             hashMap.put(hashTagName, newNode);
                             reverseHash.put(newNode, hashTagName);
                         } else { //if node is already exists increase node value
-                            double existingValue = node.mValue;
+                            double existingValue = node.value;
                             maxFibonacciHeap.increaseKey(node, (existingValue + value));
                         }
                     }

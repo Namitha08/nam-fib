@@ -43,36 +43,36 @@ public class MaxFibonacciHeap {
          * min element around the min element to remove it, then arbitrarily
          * reassign the min.
          */
-        if (maxNode.mNext == maxNode) { // max element doesn't have siblings assign max to null
+        if (maxNode.next == maxNode) { // max element doesn't have siblings assign max to null
             maxNode = null;
         }
         else { // assign random node to max
-            maxNode.mPrev.mNext = maxNode.mNext;
-            maxNode.mNext.mPrev = maxNode.mPrev;
-            maxNode = maxNode.mNext;
+            maxNode.prev.next = maxNode.next;
+            maxNode.next.prev = maxNode.prev;
+            maxNode = maxNode.next;
         }
 
         /* Next, clear the parent fields of all of the max element's children,
          * since they're about to become roots.  Because the elements are
          * stored in a circular list, the traversal is a bit complex.
          */
-        if (maxElem.mChild != null) {
+        if (maxElem.child != null) {
             /* Keep track of the first visited node. */
-            Node curr = maxElem.mChild;
+            Node curr = maxElem.child;
             do {
-                curr.mParent = null;
+                curr.parent = null;
 
                 /* Walk to the next node, then stop if this is the node we
                  * started at.
                  */
-                curr = curr.mNext;
-            } while (curr != maxElem.mChild);
+                curr = curr.next;
+            } while (curr != maxElem.child);
         }
 
         /* Next, splice the children of the root node into the topmost list, 
          * then set maxNode to point somewhere in that list.
          */
-        maxNode = mergeLists(maxNode, maxElem.mChild);
+        maxNode = mergeLists(maxNode, maxElem.child);
 
         /* If there are no entries left, we're done. */
         if (maxNode == null) return maxElem;
@@ -98,7 +98,7 @@ public class MaxFibonacciHeap {
          * list is empty or while the current element isn't the first element
          * of that list.
          */
-        for (Node curr = maxNode; toVisit.isEmpty() || toVisit.get(0) != curr; curr = curr.mNext)
+        for (Node curr = maxNode; toVisit.isEmpty() || toVisit.get(0) != curr; curr = curr.next)
             toVisit.add(curr);
 
         /* Traverse this list and perform the appropriate unioning steps. */
@@ -108,45 +108,45 @@ public class MaxFibonacciHeap {
                 /* Ensure that the list is long enough to hold an element of this
                  * degree.
                  */
-                while (curr.mDegree >= treeTable.size())
+                while (curr.degree >= treeTable.size())
                     treeTable.add(null);
 
                 /* If nothing's here, we're can record that this tree has this size
                  * and are done processing.
                  */
-                if (treeTable.get(curr.mDegree) == null) {
-                    treeTable.set(curr.mDegree, curr);
+                if (treeTable.get(curr.degree) == null) {
+                    treeTable.set(curr.degree, curr);
                     break;
                 }
 
                 /* Otherwise, merge with what's there. */
-                Node other = treeTable.get(curr.mDegree);
-                treeTable.set(curr.mDegree, null); // Clear the slot
+                Node other = treeTable.get(curr.degree);
+                treeTable.set(curr.degree, null); // Clear the slot
 
                 /* Determine which of the two trees has the smaller root, storing
                  * the two tree accordingly.
                  */
-                Node max = (other.mValue >= curr.mValue)? other : curr;
-                Node min = (other.mValue >= curr.mValue)? curr  : other;
+                Node max = (other.value >= curr.value)? other : curr;
+                Node min = (other.value >= curr.value)? curr  : other;
 
                 /* Break min out of the root list, then merge it into max's child
                  * list.
                  */
-                min.mNext.mPrev = min.mPrev;
-                min.mPrev.mNext = min.mNext;
+                min.next.prev = min.prev;
+                min.prev.next = min.next;
 
                 /* Make it a singleton so that we can merge it. */
-                min.mNext = min.mPrev = min;
-                max.mChild = mergeLists(max.mChild, min);
+                min.next = min.prev = min;
+                max.child = mergeLists(max.child, min);
                 
                 /* Reparent min appropriately. */
-                min.mParent = max;
+                min.parent = max;
 
                 /* Clear min's mark, since it can now lose another child. */
-                min.mIsMarked = false;
+                min.childCut = false;
 
                 /* Increase max's degree; it now has another child. */
-                ++max.mDegree;
+                ++max.degree;
 
                 /* Continue merging this tree. */
                 curr = max;
@@ -158,21 +158,21 @@ public class MaxFibonacciHeap {
              * priority, we need to make sure that the min pointer points to
              * the root-level one.
              */
-            if (curr.mValue >= maxNode.mValue) maxNode = curr;
+            if (curr.value >= maxNode.value) maxNode = curr;
         }
         return maxElem;
     }
 
     public void increaseKey(Node node, double newValue) {
-        if (newValue < node.mValue)
+        if (newValue < node.value)
             throw new IllegalArgumentException("New value exceeds old.");
 
-        decreaseKey(node, newValue);
+        increaseKeyValue(node, newValue);
     }
 
     public void delete(Node node) {
         //Simple hack to remove the node, assign node value to max and deque max element
-        decreaseKey(node, Double.MAX_VALUE);
+        increaseKeyValue(node, Double.MAX_VALUE);
         dequeueMax();
     }
 
@@ -195,13 +195,13 @@ public class MaxFibonacciHeap {
             return two;
         }
         else {  // join two linked lists
-            Node oneNext = one.mNext;
-            one.mNext = two.mNext;
-            one.mNext.mPrev = one;
-            two.mNext = oneNext;
-            two.mNext.mPrev = two;
+            Node oneNext = one.next;
+            one.next = two.next;
+            one.next.prev = one;
+            two.next = oneNext;
+            two.next.prev = two;
 
-            return one.mValue > two.mValue ? one : two; //return max node
+            return one.value > two.value ? one : two; //return max node
         }
     }
 
@@ -210,23 +210,23 @@ public class MaxFibonacciHeap {
      * @param node The node whose key should be decreased.
      * @param priority The node's new priority.
      */
-    private void decreaseKey(Node node, double priority) {
+    private void increaseKeyValue(Node node, double priority) {
         /* First, change the node's priority. */
-        node.mValue = priority;
+        node.value = priority;
 
         /* If the node no longer has a higher priority than its parent, cut it.
          * Note that this also means that if we try to run a delete operation
          * that decreases the key to -infinity, it's guaranteed to cut the node
          * from its parent.
          */
-        if (node.mParent != null && node.mValue >= node.mParent.mValue)
+        if (node.parent != null && node.value >= node.parent.value)
             cutNode(node);
 
         /* If our new value is the new min, mark it as such.  Note that if we
          * ended up decreasing the key in a way that ties the current minimum
          * priority, this will change the min accordingly.
          */
-        if (node.mValue >= maxNode.mValue)
+        if (node.value >= maxNode.value)
             maxNode = node;
     }
 
@@ -238,52 +238,52 @@ public class MaxFibonacciHeap {
      */
     private void cutNode(Node node) {
         /* Begin by clearing the node's mark, since we just cut it. */
-        node.mIsMarked = false;
+        node.childCut = false;
 
         /* Base case: If the node has no parent, we're done. */
-        if (node.mParent == null) return;
+        if (node.parent == null) return;
 
         /* Rewire the node's siblings around it, if it has any siblings. */
-        if (node.mNext != node) { // Has siblings
-            node.mNext.mPrev = node.mPrev;
-            node.mPrev.mNext = node.mNext;
+        if (node.next != node) { // Has siblings
+            node.next.prev = node.prev;
+            node.prev.next = node.next;
         }
 
         /* If the node is the one identified by its parent as its child,
          * we need to rewrite that pointer to point to some arbitrary other
          * child.
          */
-        if (node.mParent.mChild == node) {
+        if (node.parent.child == node) {
             /* If there are any other children, pick one of them arbitrarily. */
-            if (node.mNext != node) {
-                node.mParent.mChild = node.mNext;
+            if (node.next != node) {
+                node.parent.child = node.next;
             }
             /* Otherwise, there aren't any children left and we should clear the
              * pointer and drop the node's degree.
              */
             else {
-                node.mParent.mChild = null;
+                node.parent.child = null;
             }
         }
 
         /* Decrease the degree of the parent, since it just lost a child. */
-        --node.mParent.mDegree;
+        --node.parent.degree;
 
         /* Splice this tree into the root list by converting it to a singleton
          * and invoking the merge subroutine.
          */
-        node.mPrev = node.mNext = node;
+        node.prev = node.next = node;
         maxNode = mergeLists(maxNode, node);
 
         /* Mark the parent and recursively cut it if it's already been
          * marked.
          */
-        if (node.mParent.mIsMarked)
-            cutNode(node.mParent);
+        if (node.parent.childCut)
+            cutNode(node.parent);
         else
-            node.mParent.mIsMarked = true;
+            node.parent.childCut = true;
 
         /* Clear the relocated node's parent; it's now a root. */
-        node.mParent = null;
+        node.parent = null;
     }
 }
